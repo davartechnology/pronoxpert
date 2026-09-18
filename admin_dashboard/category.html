@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Catégorie — PronoXpert Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Styles spécifiques à cette page */
+    .result-select {
+      background: #0e160e;
+      border: 1px solid #1e2e1e;
+      color: #e8f5e8;
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: 'Barlow', sans-serif;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .result-select:focus { border-color: #00e664; }
+    .result-select.won   { border-color: rgba(0,230,100,0.5); color: #00e664; }
+    .result-select.lost  { border-color: rgba(255,68,68,0.5);  color: #ff4444; }
+
+    .match-card {
+      background: #111911;
+      border: 1px solid #1e2e1e;
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-bottom: 10px;
+      transition: border-color 0.2s;
+    }
+    .match-card:hover { border-color: #1e3e1e; }
+    .match-card.won  { border-color: rgba(0,230,100,0.25); }
+    .match-card.lost { border-color: rgba(255,68,68,0.25); }
+
+    .match-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .match-league {
+      color: #00e664;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .match-time-label {
+      color: #4d634d;
+      font-size: 12px;
+    }
+    .match-teams {
+      font-family: 'Oswald', sans-serif;
+      font-size: 20px;
+      color: #e8f5e8;
+      margin-bottom: 14px;
+      letter-spacing: 0.5px;
+    }
+    .match-teams .vs {
+      color: #4d634d;
+      font-size: 14px;
+      margin: 0 10px;
+    }
+    .match-bottom {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .option-pill {
+      background: #0a2a0a;
+      border: 1px solid rgba(0,230,100,0.3);
+      color: #e8f5e8;
+      font-size: 12px;
+      padding: 5px 14px;
+      border-radius: 20px;
+    }
+    .odds-pill {
+      background: #00e664;
+      color: #080d08;
+      font-family: 'Oswald', sans-serif;
+      font-size: 16px;
+      padding: 4px 14px;
+      border-radius: 20px;
+    }
+    .match-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .visibility-badge {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid;
+    }
+    .visibility-badge.visible {
+      background: rgba(0,230,100,0.08);
+      border-color: rgba(0,230,100,0.3);
+      color: #00e664;
+    }
+    .visibility-badge.hidden {
+      background: rgba(255,68,68,0.08);
+      border-color: rgba(255,68,68,0.3);
+      color: #ff6b6b;
+    }
+
+    .stats-bar {
+      background: #111911;
+      border: 1px solid #1e2e1e;
+      border-radius: 10px;
+      padding: 14px 20px;
+      display: flex;
+      gap: 32px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .stat-item { text-align: center; }
+    .stat-item .val {
+      font-family: 'Oswald', sans-serif;
+      font-size: 24px;
+      font-weight: 600;
+    }
+    .stat-item .lbl {
+      color: #4d634d;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .val.green { color: #00e664; }
+    .val.red   { color: #ff4444; }
+    .val.white { color: #e8f5e8; }
+    .val.orange{ color: #ff6b00; }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-logo">⚽ PRONOXPERT <span>ADMIN</span></div>
+  <div class="nav-links">
+    <a href="dashboard.html" class="nav-link">← Dashboard</a>
+    <a href="ads.html" class="nav-link">📢 Publicités</a>
+    <button class="logout-btn" onclick="logout()">Déconnexion</button>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- HEADER PAGE -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title" id="pageTitle">Catégorie</h1>
+      <p class="page-sub" id="pageSub">Gérer les pronostics</p>
+    </div>
+    <button class="btn-primary" onclick="openModal()">+ Ajouter un match</button>
+  </div>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-item">
+      <div class="val white" id="statTotal">0</div>
+      <div class="lbl">Total</div>
+    </div>
+    <div class="stat-item">
+      <div class="val white" id="statPending">0</div>
+      <div class="lbl">En attente</div>
+    </div>
+    <div class="stat-item">
+      <div class="val green" id="statWon">0</div>
+      <div class="lbl">Gagnés</div>
+    </div>
+    <div class="stat-item">
+      <div class="val red" id="statLost">0</div>
+      <div class="lbl">Perdus</div>
+    </div>
+    <div class="stat-item">
+      <div class="val orange" id="statRate">0%</div>
+      <div class="lbl">Taux victoire</div>
+    </div>
+  </div>
+
+  <!-- LISTE MATCHS -->
+  <div id="matchesList">
+    <div class="loading">Chargement...</div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════
+     MODAL AJOUT MATCH
+═══════════════════════════════════════ -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+<div class="modal" id="modal">
+  <div class="modal-header">
+    <h2>Ajouter un match</h2>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Championnat</label>
+        <input type="text" id="championship"
+               placeholder="Ex: Ligue 1, Premier League..." />
+      </div>
+      <div class="form-group">
+        <label>Pays</label>
+        <input type="text" id="country"
+               placeholder="Ex: France, Angleterre..." />
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Heure du match</label>
+      <input type="datetime-local" id="matchTime" />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Équipe 1 (Domicile)</label>
+        <input type="text" id="team1" placeholder="Équipe domicile" />
+      </div>
+      <div class="form-group">
+        <label>Équipe 2 (Extérieur)</label>
+        <input type="text" id="team2" placeholder="Équipe extérieur" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Option choisie</label>
+        <input type="text" id="optionChosen"
+               placeholder="Ex: 1X, Score Exact 2-1, Over 2.5..." />
+      </div>
+      <div class="form-group">
+        <label>Cote</label>
+        <input type="number" id="odds" step="0.01" min="1"
+               placeholder="Ex: 2.50" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="isVisible" checked
+               style="width:auto;margin:0;" />
+        Visible dans l'app immédiatement
+      </label>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-secondary" onclick="closeModal()">Annuler</button>
+    <button class="btn-primary" onclick="addMatch()">Ajouter le match</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+<script>
+  checkAuth();
+
+  // Récupérer paramètres URL
+  const params       = new URLSearchParams(window.location.search);
+  const categoryId   = params.get('id');
+  const categoryName = params.get('name');
+
+  // Titres
+  document.getElementById('pageTitle').textContent = categoryName || 'Catégorie';
+  document.getElementById('pageSub').textContent =
+    `Gérer les pronostics · ${categoryName || ''}`;
+
+  // ═══════════════════════════════════════
+  // CHARGEMENT DES MATCHS
+  // ═══════════════════════════════════════
+  async function loadMatches() {
+    const { data, error } = await supabase
+      .from('matches')
+      .select('*')
+      .eq('category_id', categoryId)
+      .order('match_time', { ascending: true });
+
+    const list = document.getElementById('matchesList');
+
+    if (error) {
+      list.innerHTML = `<div class="empty">Erreur : ${error.message}</div>`;
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      list.innerHTML = '<div class="empty">Aucun match dans cette catégorie</div>';
+      updateStats([]);
+      return;
+    }
+
+    updateStats(data);
+
+    list.innerHTML = data.map(m => {
+      const dt    = new Date(m.match_time);
+      const dateF = dt.toLocaleDateString('fr-FR',
+                      { day:'2-digit', month:'2-digit', year:'numeric' });
+      const timeF = dt.toLocaleTimeString('fr-FR',
+                      { hour:'2-digit', minute:'2-digit' });
+
+      const resultClass = m.result === 'won'
+        ? 'won' : m.result === 'lost' ? 'lost' : '';
+
+      const visibleLabel = m.is_visible
+        ? '<span class="visibility-badge visible">✅ Visible</span>'
+        : '<span class="visibility-badge hidden">🚫 Masqué</span>';
+
+      return `
+        <div class="match-card ${resultClass}" id="match-${m.id}">
+
+          <div class="match-top">
+            <span class="match-league">🏴 ${m.championship} · ${m.country}</span>
+            <span class="match-time-label">🕐 ${dateF} à ${timeF}</span>
+          </div>
+
+          <div class="match-teams">
+            ${m.team1}
+            <span class="vs">VS</span>
+            ${m.team2}
+          </div>
+
+          <div class="match-bottom">
+            <span class="option-pill">📊 ${m.option_chosen}</span>
+            <span class="odds-pill">${parseFloat(m.odds).toFixed(2)}</span>
+
+            ${visibleLabel}
+
+            <div class="match-actions">
+              <!-- Sélecteur résultat -->
+              <select
+                class="result-select ${m.result}"
+                onchange="setResult('${m.id}', this.value, this)"
+              >
+                <option value="pending" ${m.result === 'pending' ? 'selected' : ''}>
+                  ⏳ En attente
+                </option>
+                <option value="won" ${m.result === 'won' ? 'selected' : ''}>
+                  ✅ Gagné
+                </option>
+                <option value="lost" ${m.result === 'lost' ? 'selected' : ''}>
+                  ❌ Perdu
+                </option>
+              </select>
+
+              <!-- Bouton visibilité -->
+              <button
+                class="btn-toggle"
+                onclick="toggleVisibility('${m.id}', ${m.is_visible})"
+              >
+                ${m.is_visible ? 'Masquer' : 'Afficher'}
+              </button>
+
+              <!-- Bouton supprimer -->
+              <button
+                class="btn-delete"
+                onclick="deleteMatch('${m.id}')"
+              >
+                🗑 Supprimer
+              </button>
+            </div>
+          </div>
+
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ═══════════════════════════════════════
+  // STATS
+  // ═══════════════════════════════════════
+  function updateStats(data) {
+    const total   = data.length;
+    const won     = data.filter(m => m.result === 'won').length;
+    const lost    = data.filter(m => m.result === 'lost').length;
+    const pending = data.filter(m => m.result === 'pending').length;
+    const resolved = won + lost;
+    const rate    = resolved > 0
+      ? Math.round((won / resolved) * 100) : 0;
+
+    document.getElementById('statTotal').textContent   = total;
+    document.getElementById('statPending').textContent = pending;
+    document.getElementById('statWon').textContent     = won;
+    document.getElementById('statLost').textContent    = lost;
+    document.getElementById('statRate').textContent    = `${rate}%`;
+  }
+
+  // ═══════════════════════════════════════
+  // DÉFINIR RÉSULTAT
+  // ═══════════════════════════════════════
+  async function setResult(id, result, selectEl) {
+    // Mise à jour couleur du select immédiatement
+    selectEl.className = `result-select ${result}`;
+
+    const today = new Date().toISOString().split('T')[0];
+
+    const updateData = {
+      result:      result,
+      result_date: result !== 'pending' ? today : null,
+      // Masquer automatiquement si résultat donné
+      is_visible:  result === 'pending',
+    };
+
+    const { error } = await supabase
+      .from('matches')
+      .update(updateData)
+      .eq('id', id);
+
+    if (error) {
+      alert('Erreur : ' + error.message);
+    } else {
+      // Recharger pour mettre à jour stats et badges
+      loadMatches();
+    }
+  }
+
+  // ═══════════════════════════════════════
+  // VISIBILITÉ
+  // ═══════════════════════════════════════
+  async function toggleVisibility(id, current) {
+    const { error } = await supabase
+      .from('matches')
+      .update({ is_visible: !current })
+      .eq('id', id);
+
+    if (error) {
+      alert('Erreur : ' + error.message);
+    } else {
+      loadMatches();
+    }
+  }
+
+  // ═══════════════════════════════════════
+  // SUPPRIMER
+  // ═══════════════════════════════════════
+  async function deleteMatch(id) {
+    if (!confirm('Supprimer ce match définitivement ?')) return;
+
+    const { error } = await supabase
+      .from('matches')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      alert('Erreur : ' + error.message);
+    } else {
+      loadMatches();
+    }
+  }
+
+  // ═══════════════════════════════════════
+  // MODAL
+  // ═══════════════════════════════════════
+  function openModal() {
+    document.getElementById('modalOverlay').style.display = 'block';
+    document.getElementById('modal').style.display = 'block';
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').style.display = 'none';
+    document.getElementById('modal').style.display = 'none';
+  }
+
+  // ═══════════════════════════════════════
+  // AJOUTER MATCH
+  // ═══════════════════════════════════════
+  async function addMatch() {
+    const championship = document.getElementById('championship').value.trim();
+    const country      = document.getElementById('country').value.trim();
+    const matchTime    = document.getElementById('matchTime').value;
+    const team1        = document.getElementById('team1').value.trim();
+    const team2        = document.getElementById('team2').value.trim();
+    const optionChosen = document.getElementById('optionChosen').value.trim();
+    const odds         = parseFloat(document.getElementById('odds').value);
+    const isVisible    = document.getElementById('isVisible').checked;
+
+    // Validation
+    if (!championship || !country || !matchTime ||
+        !team1 || !team2 || !optionChosen || isNaN(odds) || odds < 1) {
+      alert('Veuillez remplir tous les champs correctement.');
+      return;
+    }
+
+    const { error } = await supabase.from('matches').insert({
+      category_id:   categoryId,
+      championship,
+      country,
+      match_time:    new Date(matchTime).toISOString(),
+      team1,
+      team2,
+      option_chosen: optionChosen,
+      odds,
+      is_visible:    isVisible,
+      result:        'pending',
+      result_date:   null,
+    });
+
+    if (error) {
+      alert('Erreur lors de l\'ajout : ' + error.message);
+      return;
+    }
+
+    // Reset formulaire
+    ['championship', 'country', 'matchTime',
+     'team1', 'team2', 'optionChosen', 'odds'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('isVisible').checked = true;
+
+    closeModal();
+    loadMatches();
+  }
+
+  // ═══════════════════════════════════════
+  // INIT
+  // ═══════════════════════════════════════
+  if (!categoryId) {
+    window.location.href = 'dashboard.html';
+  } else {
+    loadMatches();
+  }
+</script>
+</body>
+</html>

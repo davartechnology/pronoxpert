@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — PronoXpert Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-logo">⚽ PRONOXPERT <span>ADMIN</span></div>
+    <div class="nav-links">
+      <a href="ads.html">📢 Publicités</a>
+      <button class="logout-btn" onclick="logout()">Déconnexion</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="page-header">
+      <h1>Catégories</h1>
+      <p>Sélectionnez une catégorie pour gérer les pronostics</p>
+    </div>
+
+    <div class="categories-grid" id="categoriesGrid">
+      <!-- Chargé dynamiquement -->
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+  <script>
+    checkAuth();
+    loadCategories();
+
+    async function loadCategories() {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*, matches(count)')
+        .order('order_index');
+
+      if (error) { console.error(error); return; }
+
+      const grid = document.getElementById('categoriesGrid');
+      grid.innerHTML = data.map(cat => `
+        <div class="cat-card" onclick="window.location.href='category.html?id=${cat.id}&name=${encodeURIComponent(cat.name)}'">
+          <div class="cat-icon">${cat.icon}</div>
+          <div class="cat-name">${cat.name}</div>
+          <div class="cat-count">${cat.matches[0]?.count || 0} match(s)</div>
+          <div class="cat-arrow">→</div>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>

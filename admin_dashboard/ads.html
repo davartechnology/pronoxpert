@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Publicités — PronoXpert Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-logo">⚽ PRONOXPERT <span>ADMIN</span></div>
+    <div class="nav-links">
+      <a href="dashboard.html">← Dashboard</a>
+      <button class="logout-btn" onclick="logout()">Déconnexion</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="page-header">
+      <h1>📢 Publicités</h1>
+      <button class="btn-primary" onclick="openAdModal()">+ Ajouter une pub</button>
+    </div>
+
+    <div class="ads-types">
+      <div class="type-badge splash">🎬 Splash (ouverture 2h)</div>
+      <div class="type-badge banner">📌 Bannière top (60s)</div>
+      <div class="type-badge native">📰 Native (listes)</div>
+      <div class="type-badge square">⬛ Carré (Single)</div>
+    </div>
+
+    <div id="adsList"><div class="loading">Chargement...</div></div>
+  </div>
+
+  <!-- MODAL AJOUT PUB -->
+  <div class="modal-overlay" id="adModalOverlay" onclick="closeAdModal()"></div>
+  <div class="modal" id="adModal">
+    <div class="modal-header">
+      <h2>Ajouter une publicité</h2>
+      <button class="modal-close" onclick="closeAdModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Type de publicité</label>
+        <select id="adType">
+          <option value="splash">🎬 Splash (ouverture toutes les 2h)</option>
+          <option value="banner">📌 Bannière top (refresh 60s)</option>
+          <option value="native">📰 Native (dans les listes)</option>
+          <option value="square">⬛ Carré (page Single uniquement)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Image de la publicité</label>
+        <input type="file" id="adImage" accept="image/*" />
+      </div>
+      <div class="form-group">
+        <label>Lien (optionnel)</label>
+        <input type="url" id="adLink" placeholder="https://..." />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeAdModal()">Annuler</button>
+      <button class="btn-primary" id="uploadBtn" onclick="uploadAd()">Uploader</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+  <script>
+    checkAuth();
+    loadAds();
+
+    async function loadAds() {
+      const { data, error } = await supabase
+        .from('ads')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      const list = document.getElementById('adsList');
+      if (error || !data?.length) {
+        list.innerHTML = '<div class="empty">Aucune publicité ajoutée</div>';
+        return;
+      }
+
+      const typeLabels = { splash:'🎬 Splash', banner:'📌 Bannière', native:'📰 Native', square:'⬛ Carré' };
+      list.innerHTML = data.map(ad => `
+        <div class="match-card">
+          <div class="match-header">
+            <span class="type-badge ${ad.type}">${typeLabels[ad.type]}</span>
+            <span class="match-status ${ad.is_active ? 'visible' : 'hidden'}">${ad.is_active ? '✅ Active' : '🚫 Inactive'}</span>
+          </div>
+          <div style="margin: 12px 0;">
+            <img src="${ad.image_url}" style="max-width:200px; border-radius:8px; border:1px solid #1e2e1e;" />
+          </div>
+          ${ad.link_url ? `<div style="color:#8faa8f; font-size:13px; margin-bottom:12px;">🔗 ${ad.link_url}</div>` : ''}
+          <div class="match-actions">
+            <button class="btn-toggle" onclick="toggleAd('${ad.id}', ${ad.is_active})">
+              ${ad.is_active ? 'Désactiver' : 'Activer'}
+            </button>
+            <button class="btn-delete" onclick="deleteAd('${ad.id}')">🗑 Supprimer</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openAdModal() {
+      document.getElementById('adModalOverlay').style.display = 'block';
+      document.getElementById('adModal').style.display = 'block';
+    }
+
+    function closeAdModal() {
+      document.getElementById('adModalOverlay').style.display = 'none';
+      document.getElementById('adModal').style.display = 'none';
+    }
+
+    async function uploadAd() {
+      const type = document.getElementById('adType').value;
+      const file = document.getElementById('adImage').files[0];
+      const link = document.getElementById('adLink').value.trim();
+      const btn = document.getElementById('uploadBtn');
+
+      if (!file) { alert('Veuillez sélectionner une image'); return; }
+
+      btn.textContent = 'Upload en cours...';
+      btn.disabled = true;
+
+      const fileName = `${type}_${Date.now()}.${file.name.split('.').pop()}`;
+      const { data: storageData, error: storageError } = await supabase.storage
+        .from('ads-images')
+        .upload(fileName, file, { contentType: file.type });
+
+      if (storageError) { alert('Erreur upload : ' + storageError.message); btn.textContent = 'Uploader'; btn.disabled = false; return; }
+
+      const { data: urlData } = supabase.storage.from('ads-images').getPublicUrl(fileName);
+
+      const { error } = await supabase.from('ads').insert({
+        type, image_url: urlData.publicUrl,
+        link_url: link || null, is_active: true
+      });
+
+      if (error) { alert('Erreur : ' + error.message); }
+      else { closeAdModal(); loadAds(); }
+
+      btn.textContent = 'Uploader';
+      btn.disabled = false;
+    }
+
+    async function toggleAd(id, current) {
+      await supabase.from('ads').update({ is_active: !current }).eq('id', id);
+      loadAds();
+    }
+
+    async function deleteAd(id) {
+      if (!confirm('Supprimer cette pub ?')) return;
+      await supabase.from('ads').delete().eq('id', id);
+      loadAds();
+    }
+  </script>
+</body>
+</html>

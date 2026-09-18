@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PronoXpert — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #080d08;
+      font-family: 'Barlow', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-image: radial-gradient(ellipse at 50% 0%, rgba(0,230,100,0.08) 0%, transparent 70%);
+    }
+    .login-box {
+      background: #111911;
+      border: 1px solid #1e2e1e;
+      border-radius: 16px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+    }
+    .logo {
+      font-family: 'Oswald', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: #00e664;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      color: #4d634d;
+      font-size: 13px;
+      margin-bottom: 40px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    label {
+      display: block;
+      text-align: left;
+      color: #8faa8f;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    input {
+      width: 100%;
+      background: #0e160e;
+      border: 1px solid #1e2e1e;
+      border-radius: 8px;
+      padding: 14px 16px;
+      color: #e8f5e8;
+      font-family: 'Barlow', sans-serif;
+      font-size: 15px;
+      margin-bottom: 24px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus { border-color: #00e664; }
+    button {
+      width: 100%;
+      background: #00e664;
+      color: #080d08;
+      border: none;
+      border-radius: 8px;
+      padding: 15px;
+      font-family: 'Oswald', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    button:hover { background: #00b84d; }
+    button:active { transform: scale(0.98); }
+    .error {
+      background: rgba(255,60,60,0.1);
+      border: 1px solid rgba(255,60,60,0.3);
+      color: #ff6b6b;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 13px;
+      margin-bottom: 20px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <div class="logo">⚽ PRONOXPERT</div>
+    <div class="subtitle">Administration</div>
+    <div class="error" id="error">Mot de passe incorrect</div>
+    <label>Mot de passe</label>
+    <input type="password" id="password" placeholder="••••••••" onkeydown="if(event.key==='Enter') login()" />
+    <button onclick="login()">CONNEXION</button>
+  </div>
+  <script>
+    // Vérifier si déjà connecté
+    if (sessionStorage.getItem('admin_auth') === 'true') {
+      window.location.href = 'dashboard.html';
+    }
+    function login() {
+      const pwd = document.getElementById('password').value;
+      if (pwd === 'admin123') {
+        sessionStorage.setItem('admin_auth', 'true');
+        window.location.href = 'dashboard.html';
+      } else {
+        document.getElementById('error').style.display = 'block';
+      }
+    }
+  </script>
+</body>
+</html>
