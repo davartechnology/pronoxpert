@@ -5,12 +5,19 @@ const SITE_AUTH_URL = 'https://hg-customer-api-prod.sporty-tech.net/api/authenti
 const SITE_EVENT_API = 'https://hg-event-api-prod.sporty-tech.net/api';
 const APP_VERSION = '35210';
 
+const BROWSER_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+  'Accept-Language': 'fr',
+  Origin: 'https://www.paryajlakay.com',
+  Referer: 'https://www.paryajlakay.com/',
+};
+
 async function login(siteUser, sitePassword) {
   // Le site prefixe l'indicatif Haiti (+509) devant le numero local saisi par l'utilisateur.
   const loginValue = siteUser.startsWith('+') ? siteUser : `+509${siteUser}`;
   const res = await fetch(SITE_AUTH_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...BROWSER_HEADERS },
     body: JSON.stringify({ login: loginValue, password: sitePassword, rememberMe: false, withRefresh: false }),
   });
   if (!res.ok) throw new Error('Echec de connexion au site (HTTP ' + res.status + ')');
@@ -23,9 +30,8 @@ function apiHeaders(token) {
   return {
     Authorization: 'Bearer ' + token,
     Accept: 'application/json, text/plain, */*',
-    'Accept-Language': 'fr',
     'App-Version': APP_VERSION,
-    Referer: 'https://www.paryajlakay.com/',
+    ...BROWSER_HEADERS,
   };
 }
 
