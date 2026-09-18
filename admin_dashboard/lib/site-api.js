@@ -6,10 +6,12 @@ const SITE_EVENT_API = 'https://hg-event-api-prod.sporty-tech.net/api';
 const APP_VERSION = '35210';
 
 async function login(siteUser, sitePassword) {
+  // Le site prefixe l'indicatif Haiti (+509) devant le numero local saisi par l'utilisateur.
+  const loginValue = siteUser.startsWith('+') ? siteUser : `+509${siteUser}`;
   const res = await fetch(SITE_AUTH_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ login: siteUser, password: sitePassword, rememberMe: false, withRefresh: false }),
+    body: JSON.stringify({ login: loginValue, password: sitePassword, rememberMe: false, withRefresh: false }),
   });
   if (!res.ok) throw new Error('Echec de connexion au site (HTTP ' + res.status + ')');
   const data = await res.json();
