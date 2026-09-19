@@ -4,3 +4,6 @@ node_modules/
 .allai/
 flutter_app/build/
 flutter_app/.dart_tool/
+candidates.json
+picks.json
+*.log
