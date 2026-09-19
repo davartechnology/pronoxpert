@@ -1,0 +1,12 @@
+{
+  "name": "pronoxpert",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "fetch-candidates": "node scripts/fetch-candidates.js",
+    "write-tickets": "node scripts/write-tickets.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  }
+}

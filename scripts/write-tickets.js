@@ -1,49 +1,52 @@
-// Script autonome (execute par GitHub Actions, planifie tous les jours). Meme logique que
-// l'ancien endpoint Vercel api/generate-tickets.js, mais en script Node simple, sans limite
-// de duree (contrairement a une fonction serverless sur un plan gratuit).
+// Etape 2/2 : combine candidates.json (matchs + options + cotes reelles) avec picks.json
+// (mes choix de marche par match, issus d'une recherche reelle H2H/forme/blessures, pas d'un
+// appel a une API IA payante), construit les 4 tickets par paliers de cote et les ecrit dans
+// Supabase.
+//
+// Format attendu de picks.json : [{ "matchId": 123, "chosenKey": "DC_1X", "justification": "..." }, ...]
 
-const path = require('path');
-const { login, fetchFootballEvents, withinWindow } = require('../admin_dashboard/lib/site-api');
-const { isAllowed } = require('../admin_dashboard/lib/allowed-leagues');
-const { researchAllMatches } = require('../admin_dashboard/lib/openai-research');
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+const fs = require('fs');
 const { buildTickets } = require('../admin_dashboard/lib/ticket-builder');
 const { getCategories, clearUpcomingPendingMatches, insertMatches, updateCategoryOdds } = require('../admin_dashboard/lib/supabase-writer');
 
-const WINDOW_HOURS = 30;
-
-const REQUIRED_ENV = ['SITE_USER', 'SITE_PASS', 'OPENAI_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
+const CANDIDATES_FILE = process.argv[2] || 'candidates.json';
+const PICKS_FILE = process.argv[3] || 'picks.json';
 
 async function main() {
-  const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
-  if (missing.length > 0) {
-    throw new Error('Variables d\'environnement manquantes: ' + missing.join(', '));
+  const candidates = JSON.parse(fs.readFileSync(CANDIDATES_FILE, 'utf-8'));
+  const picksRaw = JSON.parse(fs.readFileSync(PICKS_FILE, 'utf-8'));
+
+  const byId = new Map(candidates.map((c) => [c.matchId, c]));
+  const picks = [];
+  for (const p of picksRaw) {
+    const match = byId.get(p.matchId);
+    if (!match) {
+      console.log(`Ignore : matchId ${p.matchId} introuvable dans ${CANDIDATES_FILE}.`);
+      continue;
+    }
+    if (!match.optionMenu[p.chosenKey]) {
+      console.log(`Ignore : option ${p.chosenKey} introuvable pour ${match.match}.`);
+      continue;
+    }
+    picks.push({
+      matchId: match.matchId,
+      homeTeam: match.homeTeam,
+      awayTeam: match.awayTeam,
+      league: match.league,
+      country: match.country,
+      expectedStart: match.expectedStart,
+      optionMenu: match.optionMenu,
+      chosenKey: p.chosenKey,
+      justification: p.justification,
+    });
   }
-
-  console.log('Connexion au site de paris...');
-  const token = await login(process.env.SITE_USER, process.env.SITE_PASS);
-
-  console.log('Recuperation des matchs de football...');
-  const allEvents = await fetchFootballEvents(token);
-
-  const candidates = allEvents.filter(
-    (m) => isAllowed(m.country, m.league) && withinWindow(m.expectedStart, WINDOW_HOURS)
-  );
-  console.log(`${candidates.length} matchs eligibles (competitions autorisees, fenetre ${WINDOW_HOURS}h).`);
-
-  if (candidates.length === 0) {
-    console.log('Aucun match eligible. Fin.');
-    return;
-  }
-
-  console.log('Recherche IA (OpenAI) par lots...');
-  const picks = await researchAllMatches(candidates, process.env.OPENAI_API_KEY);
-  console.log(`${picks.length} matchs avec un pronostic resolu.`);
+  console.log(`${picks.length} picks valides sur ${picksRaw.length}.`);
 
   const tickets = buildTickets(picks);
   console.log(`${tickets.length} ticket(s) construit(s).`);
-
   if (tickets.length === 0) {
-    console.log('Pas assez de picks pour un ticket. Fin.');
+    console.log('Rien a ecrire. Fin.');
     return;
   }
 

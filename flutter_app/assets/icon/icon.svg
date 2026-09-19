@@ -1,0 +1,30 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0e160e"/>
+      <stop offset="100%" stop-color="#080d08"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00e664"/>
+      <stop offset="100%" stop-color="#00b84f"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="1024" rx="220" fill="url(#bg)"/>
+  <rect x="24" y="24" width="976" height="976" rx="200" fill="none" stroke="#1e2e1e" stroke-width="6"/>
+
+  <!-- Ballon de football stylise -->
+  <circle cx="512" cy="420" r="230" fill="none" stroke="url(#accent)" stroke-width="16"/>
+  <polygon points="512,300 570,345 548,415 476,415 454,345"
+           fill="url(#accent)"/>
+  <line x1="512" y1="300" x2="512" y2="230" stroke="url(#accent)" stroke-width="14" stroke-linecap="round"/>
+  <line x1="570" y1="345" x2="640" y2="320" stroke="url(#accent)" stroke-width="14" stroke-linecap="round"/>
+  <line x1="548" y1="415" x2="590" y2="475" stroke="url(#accent)" stroke-width="14" stroke-linecap="round"/>
+  <line x1="476" y1="415" x2="434" y2="475" stroke="url(#accent)" stroke-width="14" stroke-linecap="round"/>
+  <line x1="454" y1="345" x2="384" y2="320" stroke="url(#accent)" stroke-width="14" stroke-linecap="round"/>
+
+  <!-- Monogramme PX -->
+  <text x="512" y="790" text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif" font-weight="700"
+        font-size="220" fill="#e8f5e8" letter-spacing="4">PX</text>
+</svg>
